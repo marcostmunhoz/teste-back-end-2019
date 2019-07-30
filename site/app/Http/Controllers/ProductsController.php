@@ -16,7 +16,7 @@ class ProductsController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function showAll() {
-        return response()->json([ 'data' => Product::all() ]);
+        return responder()->success(Product::all())->respond();
     }
 
     /**
@@ -26,20 +26,12 @@ class ProductsController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function show($id) {
-        try {
-            if (!$id) {
-                return response()->json([ 'message' => 'Nenhum ID foi fornecido.' ], 400);
-            }
-
-            $product = Product::find($id);
-            if (!$product) {
-                return response()->json([ 'message' => "Nenhum produto foi localizado para o ID $id." ], 404);
-            }
-
-            return response()->json([ 'data' => $product ]);
-        } catch (Exception $ex) {
-            return response()->json([ 'error' => $ex->getMessage() ], 500);
+        $product = Product::find($id);
+        if (!$product) {
+            return responder()->error('product_not_found')->data([ 'id' => $id ])->respond(404);
         }
+
+        return responder()->success($product)->respond();
     }
 
     /**
@@ -48,24 +40,16 @@ class ProductsController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function create(Request $request) {
-        try {
-            $data = $request->all();
-            $validator = Validator::make($data, [
-                'name'   => 'required:price,weight',
-                'price'  => 'required:name,weight',
-                'weight' => 'required:name,price'
-            ]);
+        $data = $request->validate([
+            'name'   => 'required|string',
+            'price'  => 'required|numeric',
+            'weight' => 'required|numeric'
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json($validator->getMessageBag(), 400);
-            }
+        $product = new Product($data);
+        $product->save();
 
-            $product = Product::insert($data);
-
-            return response()->json([ 'message' => 'Produto cadastrado com sucesso.' ], 201);
-        } catch (Exception $ex) {
-            return response()->json([ 'error' => $ex->getMessage() ], 500);
-        }
+        return responder()->success($product)->respond(201);
     }
     
     /**
@@ -74,34 +58,21 @@ class ProductsController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function update($id, Request $request) {
-        try {
-            if (!$id) {
-                return response()->json([ 'message' => 'Nenhum ID foi fornecido.' ], 400);
-            }
-
-            $product = Product::find($id);
-            if (!$product) {
-                return response()->json([ 'message' => "Nenhum produto foi localizado para o ID $id." ], 404);
-            }
-
-            $data = $request->all();
-            $validator = Validator::make($data, [
-                'name'   => 'required_without_all:price,weight|string',
-                'price'  => 'required_without_all:name,weight|numeric',
-                'weight' => 'required_without_all:name,price|numeric'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json($validator->getMessageBag(), 400);
-            }
-
-            $product->fill($data);
-            $product->save();
-
-            return response()->json([ 'message' => 'Produto atualizado com sucesso.' ]);
-        } catch (Exception $ex) {
-            return response()->json([ 'error' => $ex->getMessage() ], 500);
+        $product = Product::find($id);
+        if (!$product) {
+            return responder()->error('product_not_found')->data([ 'id' => $id ])->respond(404);
         }
+
+        $data = $request->validate([
+            'name'   => 'required_without_all:price,weight',
+            'price'  => 'required_without_all:name,weight',
+            'weight' => 'required_without_all:name,price'
+        ]);
+
+        $product->fill($data);
+        $product->save();
+
+        return responder()->success($product)->respond();
     }
 
     /**
@@ -110,21 +81,13 @@ class ProductsController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function delete($id) {
-        try {
-            if (!$id) {
-                return response()->json([ 'message' => 'Nenhum ID foi fornecido.' ], 400);
-            }
-
-            $product = Product::find($id);
-            if (!$product) {
-                return response()->json([ 'message' => "Nenhum produto foi localizado para o ID $id." ], 404);
-            }
-
-            $product->delete();
-
-            return response()->json([ 'message' => 'Produto deletado com sucesso.' ]);
-        } catch (Exception $ex) {
-            return response()->json([ 'message' => $ex->getMessage() ]);
+        $product = Product::find($id);
+        if (!$product) {
+            return responder()->error('product_not_found')->data([ 'id' => $id ])->respond(404);
         }
+        
+        $product->delete();
+
+        return responder()->success([ 'message' => 'Produto excluído com sucesso.' ])->respond();
     }
 }

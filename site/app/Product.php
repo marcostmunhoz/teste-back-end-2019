@@ -3,8 +3,9 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Flugg\Responder\Contracts\Transformable;
 
-class Product extends Model
+class Product extends Model implements Transformable
 {
     /**
      * O nome da tabela correspondente ao modelo no banco de dados.
@@ -26,4 +27,23 @@ class Product extends Model
      * @var array
      */
     protected $hidden = [ 'created_at', 'updated_at' ];
+
+    /**
+     * Realiza a transformação do produto para retorno.
+     * 
+     * @return callable
+     */
+    public function transformer() {
+        return function ($product) {
+            return [
+                'id'     => (int) $product->id,
+                'name'   => $product->name,
+                'price'  => (float) $product->price,
+                'weight' => (float) $product->weight,
+                'links'  => [
+                    'uri' => "/products/$product->id"
+                ]
+            ];
+        };
+    }
 }
