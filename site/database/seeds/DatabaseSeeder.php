@@ -16,5 +16,7 @@ class DatabaseSeeder extends Seeder
             'email'    => 'suporte@dindigital.com',
             'password' => bcrypt('secret')
         ]);
+        
+        factory(\App\Product::class, 10)->create();
     }
 }
