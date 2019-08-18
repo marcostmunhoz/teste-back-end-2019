@@ -11,12 +11,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        \App\User::create([
-            'name'     => 'Suporte',
-            'email'    => 'suporte@dindigital.com',
-            'password' => bcrypt('secret')
-        ]);
-        
+        factory(\App\User::class, 1)->create();
         factory(\App\Product::class, 10)->create();
     }
 }
